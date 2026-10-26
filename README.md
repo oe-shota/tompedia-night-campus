@@ -1,7 +1,7 @@
 # とんペディア版 Among Us
 
 夜の東北大学 講義棟（A・B・C棟）を舞台に、とん平たちが「インポスター」を探す推理ゲームです。
-HTML 1ファイル（`index.html`）だけで動きます。画像はファイル内に埋め込み済みです。
+ビルド不要の静的ファイル（`index.html` ＋ `css/` ＋ `js/`（ES モジュール）＋ `assets/`）で動きます。
 
 - **1人プレイ**：ボット相手にどこでも遊べます。
 - **オンライン対戦**：claude.ai の artifact として開いたときだけ使えます（後述）。
@@ -15,7 +15,7 @@ HTML 1ファイル（`index.html`）だけで動きます。画像はファイ�
 
 - 操作：WASD / 矢印キーで移動（スマホは画面をドラッグ）、E・Space で使う、R で報告、Q でキル、M でマップ
 - 階段：▲▼のマスで「使う」と上下の階へ。A・C棟は4F、B棟は2Fまで。2Fの西側に大講義室（A200・B200・C200）
-- 会議：死体の報告、またはB棟1Fラウンジの緊急ボタン（1人1回）で開催。定型ボタンか自由入力で発言し、投票する
+- 会議：死体の報告、またはB棟1Fラウンジの緊急ボタン（1人1回）で開催。定型ボタンか自由入力で発言し、投票する（議論は最長45秒、投票は20秒。`js/config.js` の `DISCUSS_TIME` / `VOTE_TIME` で変更できる）
 - インポスターは6人以下なら1人、7人以上なら1〜2人
 
 ## オンライン対戦
@@ -42,7 +42,13 @@ claude.ai の artifact の `room` 機能（同じページを開いている人�
 | `act` | 参加者 | 操作（キル、報告、緊急ボタン、タスク完了、投票、発言、ロビーでの参加の合図） |
 | `pos` | 全員 | 自分の位置（0.15秒ごと。ホストはボットの位置も） |
 
-公開するときの capabilities：
+公開するときは、次のファイルだけを含めます（`test/`・`docs/`・`assets/tonpei/original/` は含めない）：
+
+```
+index.html, css/style.css, js/**/*.js, assets/tonpei/{stand,walk1,walk2,dead}.png
+```
+
+capabilities：
 
 ```json
 { "room": { "topics": { "st": "interact", "ev": "interact", "act": "interact", "pos": "interact" } } }
@@ -54,25 +60,52 @@ claude.ai の artifact の `room` 機能（同じページを開いている人�
 python -m http.server 5178
 ```
 
+ES モジュールを使っているので、`index.html` をファイルとして直接開く（`file://`）と動きません。必ずローカルサーバー経由で開いてください。
+
 `http://localhost:5178/` を開くと1人プレイを試せます（ローカルではオンライン対戦のボタンは無効です）。
 
 オンライン対戦は、`test/mockroom.js` で `room` を BroadcastChannel で模擬して、同じブラウザの2タブで試せます。
 それぞれのタブの開発者コンソールで次を実行します（コードは同じ4桁に、ホスト側は `true`、参加者側は `false`）。
+`window.__dev` は localhost / 127.0.0.1 で開いたときだけ用意されます。
 
 ```js
-eval(await (await fetch('/test/mockroom.js')).text());
-ROOM = __mockRoom;
-await enterRoom('1234', true);
+await __dev.mockRoom('1234', true);
 ```
 
 ## ファイル構成
 
 ```
-index.html               ゲーム本体（画像を埋め込み済みの1ファイル）
+index.html               画面のマークアップ（CSP を設定。script / style はすべて外部ファイル）
+css/style.css            見た目
+js/main.js               エントリ（初期化・ゲームループ）
+js/config.js             定数・プレイヤーの色
+js/util.js               小さな共通関数（DOM 生成・入力の無害化など）
+js/state.js              モジュールをまたいで書き換える状態（G）
+js/world.js              講義棟のマップ・経路探索・タスクの配置
+js/sprites.js            とん平の画像の読み込みと色の塗り替え
+js/audio.js              効果音
+js/render.js             描画（フロア・視界・全体マップ）
+js/ui.js                 HUD の小さな表示（トースト・タスク一覧・マップ開閉）
+js/game.js               ゲームの開始・ラウンド・勝敗
+js/player.js             自分の操作と HUD のボタン
+js/bots.js               ボットの AI とキル
+js/tasks.js              タスクのミニゲーム
+js/meeting.js            会議・投票・追放
+js/net/room.js           オンライン対戦：部屋への出入り・ロビー・送信
+js/net/host.js           オンライン対戦：ホストの判定と状態配信
+js/net/client.js         オンライン対戦：参加者の受信処理
+js/net/sync.js           オンライン対戦：位置の同期・定期処理
+js/ticker.worker.js      タブが裏に回っても進行を続けるための Worker
 assets/tonpei/           ゲームで使っているとん平の画像（白フチを外して縮小したもの）
 assets/tonpei/original/  元のイラスト
 docs/floorplan-sketch.jpg 講義棟の配置の手書きメモ（上が西）
 test/mockroom.js         オンライン対戦のテスト用の模擬 room
 ```
+
+## セキュリティ
+
+- `index.html` の CSP で、自分のオリジンの script / style / 画像と Google Fonts だけを許可しています（インライン script・style 属性・`eval`・`blob:` は不可）。
+- 画面の文字はすべて `textContent` で入れています（`innerHTML` は使わない）。
+- ほかの端末から届いたデータは、型・範囲・件数を確かめてから使います（名前と発言は制御文字・不可視文字を除去）。
 
 とん平のイラストはとんペディアのキャラクターです。リポジトリは非公開で管理しています。
