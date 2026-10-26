@@ -1,5 +1,5 @@
 /* base / title */
-:root{--bg:#07050f;--fg:#f4f0fa;--muted:#a99cbf;--accent:#852dab;--accent-hi:#a54fcc;--sub:#a8d84e;--red:#ff4d5e;--panel:#160f26;--line:#33264d}
+:root{color-scheme:dark;--bg:#07050f;--fg:#f4f0fa;--muted:#a99cbf;--accent:#852dab;--accent-hi:#a54fcc;--sub:#a8d84e;--red:#ff4d5e;--panel:#160f26;--line:#33264d}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic UI",sans-serif;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
 canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
