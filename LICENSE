@@ -1,18 +1,55 @@
-Copyright (c) 2026 oe-shota. All rights reserved.
+MIT License
 
-このリポジトリのソースコード・テキスト・マップなどは、著作権者の許可なく複製・改変・再配布することはできません。
-公開している Web 版をブラウザで遊ぶことは自由です。
+Copyright (c) 2026 oe-shota
 
-次のものは上記と別に扱います。
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-- とん平のイラスト（assets/tonpei/）
-  とんペディアの著作物で、許可を得てこのゲームに使用しています。
-  このゲーム以外での利用は、とんペディアの許可が必要です。
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-- フォント Zen Kaku Gothic New
-  Google Fonts から読み込んでおり、このリポジトリには含みません。
-  SIL Open Font License 1.1 で提供されています。
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
-このゲームは非公式のファン作品です。
-東北大学、および Among Us の権利者である Innersloth LLC とは関係がなく、承認も受けていません。
-「Among Us」は Innersloth LLC の商標です。
+---------------------------------------------------------------------------
+
+The MIT License above applies to the source code and other files in this
+repository, EXCEPT the following, which are not licensed under it:
+
+- The Tonpei (とん平) illustrations in assets/tonpei/.
+  The Tonpei character and illustrations are works of Tompedia (とんペディア)
+  and are used in this game with permission. No rights to use, copy, modify
+  or redistribute them are granted. Contact Tompedia for any other use.
+
+- The names "とんペディア" / "Tompedia" and "とん平" / "Tonpei".
+  This license does not grant permission to use them, except as needed to
+  describe the origin of the Software.
+
+- The font Zen Kaku Gothic New, loaded from Google Fonts and not included in
+  this repository, is licensed under the SIL Open Font License 1.1.
+
+This game is an unofficial fan work. It is not affiliated with or endorsed by
+Tohoku University or Innersloth LLC. "Among Us" is a trademark of
+Innersloth LLC.
+
+---------------------------------------------------------------------------
+
+（日本語の要約。正式な条件は上の英文です）
+
+ソースコードなどは MIT ライセンスです。著作権表示とこのライセンス文を残せば、自由に使用・改変・再配布できます。
+
+ただし、次のものは MIT ライセンスの対象外です。
+- とん平のイラスト（assets/tonpei/）。とんペディアの著作物で、許可を得てこのゲームに使用しています。ほかで使うにはとんペディアの許可が必要です。
+- 「とんペディア」「とん平」の名前。
+- フォント Zen Kaku Gothic New（Google Fonts から読み込み、SIL Open Font License 1.1）。
+
+このゲームは非公式のファン作品で、東北大学・Innersloth LLC とは関係がなく、承認も受けていません。「Among Us」は Innersloth LLC の商標です。

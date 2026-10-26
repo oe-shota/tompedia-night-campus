@@ -141,7 +141,7 @@ test/mockroom.js         オンライン対戦のテスト用の模擬 room
 worker/index.js          Web 版の中継サーバー（Cloudflare Workers + Durable Objects）
 scripts/build.mjs        Web 版で配信するファイルを dist/ にコピー
 wrangler.jsonc           Web 版の Cloudflare の設定
-LICENSE                  権利表示（All rights reserved。イラスト・フォントの扱い）
+LICENSE                  ライセンス（コードは MIT。とん平のイラストなどは対象外）
 ```
 
 ## セキュリティ
@@ -152,8 +152,8 @@ LICENSE                  権利表示（All rights reserved。イラスト・フ
 
 ## 権利・クレジット
 
-- ソースコードなどは All rights reserved（© 2026 oe-shota）。詳しくは [LICENSE](LICENSE)。リポジトリは非公開で管理しています。
-- とん平のイラスト（`assets/tonpei/`）はとんペディアの著作物で、許可を得て使っています。
+- ソースコードなどは [MIT ライセンス](LICENSE)（© 2026 oe-shota）です。
+- **とん平のイラスト（`assets/tonpei/`）は MIT ライセンスの対象外です。** とんペディアの著作物で、許可を得てこのゲームに使っています。フォークや改変をして使う場合は、イラストを差し替えてください。「とんペディア」「とん平」の名前も対象外です。
 - フォント：[Zen Kaku Gothic New](https://fonts.google.com/specimen/Zen+Kaku+Gothic+New)（SIL Open Font License 1.1、Google Fonts から読み込み）。効果音は Web Audio で合成しています（音源ファイルなし）。
 - 非公式のファン作品です。東北大学、Innersloth LLC（Among Us）とは関係がなく、承認も受けていません。「Among Us」は Innersloth LLC の商標です。講義棟の配置は手書きのメモをもとにしたもので、正確ではありません。
 - 名前と発言は中継サーバーで同じ部屋の端末に配るだけで、保存しません。フォントを Google Fonts から読み込むため、閲覧者の IP アドレスなどが Google に送られます。
