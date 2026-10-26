@@ -4,7 +4,7 @@
 ビルド不要の静的ファイル（`index.html` ＋ `css/` ＋ `js/`（ES モジュール）＋ `assets/`）で動きます。
 
 - **1人プレイ**：ボット相手にどこでも遊べます。
-- **オンライン対戦**：claude.ai の artifact として開いたときだけ使えます（後述）。
+- **オンライン対戦**：Web 版（Cloudflare Workers で配信したページ）か、claude.ai の artifact として開いたときに使えます（後述）。
 
 ## 遊び方
 
@@ -20,18 +20,43 @@
 
 ## オンライン対戦
 
-claude.ai の artifact の `room` 機能（同じページを開いている人どうしのリアルタイム通信）を使っています。
-
 1. ホストが「部屋を作る」を押すと、4桁の部屋コードが出る
 2. ほかの人はそのコードを入力して「参加」
 3. ホストが人数とインポスター数を決めて「ゲーム開始」。足りない分はボットが入る
 
-条件と注意点：
+ホストのブラウザが判定とボットを担当します。ホストが抜けると部屋は閉じ、参加者は部屋から抜けてタイトルに戻ります。
+役職は暗号化していません（開発者ツールを開けば見えます）。
 
-- 参加者全員が claude.ai にログインしていて、artifact を **コントリビューター以上** で共有されている必要があります（閲覧のみだと操作を送れません）
+通信は「room」（同じ部屋の端末どうしでメッセージを配る仕組み）を通して行い、ゲーム側はどちらの room かを区別しません（`js/net/room.js` の `initRoom` で選ぶ）。
+
+| 開き方 | room | 条件 |
+| --- | --- | --- |
+| Web 版 | 自前の中継サーバー（`worker/index.js`、`js/net/wsroom.js`） | URL を開くだけ。1部屋16台まで |
+| claude.ai の artifact | artifact の `room` 機能 | 全員が claude.ai にログインし、artifact を **コントリビューター以上** で共有されていること |
+| それ以外（GitHub Pages など） | なし | 1人プレイのみ |
+
+### Web 版（Cloudflare Workers）
+
+1つの Worker が、ゲームのファイルの配信と中継サーバーを兼ねます。`/ws/<部屋コード>` への WebSocket だけを Worker が受け、部屋コードごとの Durable Object（`Room`）が、届いたメッセージを同じ部屋の他の端末に配ります。配信するのは `npm run build` が `dist/` にコピーするファイルだけです（`scripts/build.mjs`）。
+
+中継サーバーの制限：話題は `st` / `ev` / `act` / `pos` だけ、1メッセージ 4096 バイトまで、1台あたり毎秒60件まで（超えたら切断）、別のサイトからの接続は拒否。
+presence（各端末の名前・位置）は 0.5 秒に1回まで間引いて送ります（位置は `pos` で0.15秒ごとに届くため）。
+
+デプロイ（初回は Cloudflare アカウントが必要）：
+
+```bash
+npm install
+npx wrangler login   # ブラウザで Cloudflare にログイン
+npm run deploy       # https://tompedia-among-us.<アカウント>.workers.dev に公開
+```
+
+- 無料プランで動きます。目安として、10人の部屋で1時間遊ぶと Durable Objects のリクエストを約1.6万回使います（無料枠は1日10万回）。
+- 部屋コードは4桁なので、総当たりで他人の部屋に入られる可能性があります。
+- デプロイすると中継サーバーが入れ替わり、遊んでいる部屋は切断されます。
+
+### claude.ai の artifact
+
 - artifact を更新すると、開いている全員のページが再読み込みされ、部屋は解散します
-- 役職は暗号化していません（開発者ツールを開けば見えます）
-- ホストのブラウザが判定とボットを担当します。ホストが抜けると部屋は閉じ、参加者は部屋から抜けてタイトルに戻ります
 
 ### 通信の仕組み
 
@@ -42,19 +67,30 @@ claude.ai の artifact の `room` 機能（同じページを開いている人�
 | `act` | 参加者 | 操作（キル、報告、緊急ボタン、タスク完了、投票、発言、ロビーでの参加の合図） |
 | `pos` | 全員 | 自分の位置（0.15秒ごと。ホストはボットの位置も） |
 
-公開するときは、次のファイルだけを含めます（`test/`・`docs/`・`assets/tonpei/original/` は含めない）：
+artifact として公開するときは、次のファイルだけを含めます（`test/`・`docs/`・`worker/`・`assets/tonpei/original/` は含めない）：
 
 ```
 index.html, css/style.css, js/**/*.js, assets/tonpei/{stand,walk1,walk2,dead}.png
 ```
 
-capabilities：
+artifact の capabilities：
 
 ```json
 { "room": { "topics": { "st": "interact", "ev": "interact", "act": "interact", "pos": "interact" } } }
 ```
 
 ## ローカルでの確認
+
+Web 版と同じ構成（中継サーバーつき）で試すには：
+
+```bash
+npm install
+npm run dev          # http://localhost:8787/
+```
+
+同じブラウザの2つのタブで開けば、片方で部屋を作り、もう片方で参加してオンライン対戦を試せます。
+
+中継サーバーなしで、静的ファイルだけを配って試す場合：
 
 ```bash
 python -m http.server 5178
@@ -95,11 +131,15 @@ js/net/room.js           オンライン対戦：部屋への出入り・ロビ�
 js/net/host.js           オンライン対戦：ホストの判定と状態配信
 js/net/client.js         オンライン対戦：参加者の受信処理
 js/net/sync.js           オンライン対戦：位置の同期・定期処理
+js/net/wsroom.js         オンライン対戦（Web 版）：中継サーバーとつなぐ room
 js/ticker.worker.js      タブが裏に回っても進行を続けるための Worker
 assets/tonpei/           ゲームで使っているとん平の画像（白フチを外して縮小したもの）
 assets/tonpei/original/  元のイラスト
 docs/floorplan-sketch.jpg 講義棟の配置の手書きメモ（上が西）
 test/mockroom.js         オンライン対戦のテスト用の模擬 room
+worker/index.js          Web 版の中継サーバー（Cloudflare Workers + Durable Objects）
+scripts/build.mjs        Web 版で配信するファイルを dist/ にコピー
+wrangler.jsonc           Web 版の Cloudflare の設定
 ```
 
 ## セキュリティ

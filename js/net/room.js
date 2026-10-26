@@ -11,6 +11,7 @@ import {G,isHost,isClient} from '../state.js';
 import {sendState,onAct,hostStartGame} from './host.js';
 import {onSt,onEv,hostGone} from './client.js';
 import {renderDiag} from './sync.js';
+import {wsRoom,wsAvailable} from './wsroom.js';
 
 export const posMap=new Map(); // peer -> {d,t}：posイベントで届いた最新位置（ゲームの参加者の分だけ）
 export const lobbyReg=new Map(); // presenceが届かない場合の予備：参加者の「参加中」合図
@@ -27,8 +28,9 @@ export function emitAct(d){if(isClient()&&G.RM)G.RM.emit('act',{...d,g:G.gameId}
 export async function initRoom(){
   let r=null;
   try{if(window.claude&&typeof window.claude.use==='function')r=await window.claude.use('room');}catch(e){r=null;}
+  if(!r&&await wsAvailable())r=wsRoom; // claude.ai の外：自前の中継サーバー（worker/index.js）
   G.ROOM=r;
-  if(!r){$('mpNote').textContent='オンライン対戦は、claude.ai でこのページを開いたときに使えます（コントリビューター以上の共有が必要）。';$('bCreate').disabled=$('bJoin').disabled=true;return;}
+  if(!r){$('mpNote').textContent='このページではオンライン対戦は使えません（1人プレイのみ）。';$('bCreate').disabled=$('bJoin').disabled=true;return;}
   $('mpNote').textContent='「部屋を作る」と4桁のコードが出ます。仲間はそのコードで参加。人数が足りない分はボットが入ります。';
 }
 $('bCreate').onclick=()=>{ac();enterRoom(String(1000+Math.floor(Math.random()*9000)),true);};
@@ -45,7 +47,7 @@ export async function enterRoom(code,asHost){
   if(!G.ROOM||G.RM)return;
   $('bCreate').disabled=$('bJoin').disabled=true;
   try{G.RM=await G.ROOM.join('tp-'+code);}
-  catch(e){$('mpNote').textContent=e&&e.code==='not_permitted'?'この部屋には入れませんでした（権限がありません）。':'部屋に入れませんでした。少し待ってからもう一度試してください。';$('bCreate').disabled=$('bJoin').disabled=false;return;}
+  catch(e){$('mpNote').textContent=e&&e.code==='not_permitted'?'この部屋には入れませんでした（権限がありません）。':e&&e.code==='room_full'?'この部屋は満員です。':'部屋に入れませんでした。少し待ってからもう一度試してください。';$('bCreate').disabled=$('bJoin').disabled=false;return;}
   const RM=G.RM;
   G.MODE=asHost?'host':'client';G.hostPeer=null;G.gameId=0;G.lobbyBusy=false;G.lastEnd=null;G.actors=[];G.player=null;
   const le=e=>{G.netStat.err=(e&&e.code)||'error';renderDiag();};

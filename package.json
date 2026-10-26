@@ -1,0 +1,13 @@
+{
+  "name": "tompedia-among-us",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "4.152.0"
+  }
+}

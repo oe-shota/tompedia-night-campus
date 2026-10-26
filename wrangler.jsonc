@@ -1,0 +1,19 @@
+// Web 版の配信（Cloudflare Workers）：ゲームの静的ファイル＋オンライン対戦の中継サーバー
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "tompedia-among-us",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-10-01",
+  "build": {
+    "command": "node scripts/build.mjs", // 公開するファイルだけを dist/ にコピー
+    "watch_dir": ["index.html", "css", "js", "assets"]
+  },
+  "assets": {
+    "directory": "dist",
+    "run_worker_first": ["/ws/*"]
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "ROOMS", "class_name": "Room" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Room"] }]
+}
