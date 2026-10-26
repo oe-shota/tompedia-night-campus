@@ -12,19 +12,42 @@ import {emitEv,emitAct} from './net/room.js';
 import {sendState} from './net/host.js';
 
 // ---- ボットの発言 ----
-function hear(sp,id,amt){for(const c of G.actors)if(c.alive&&!c.isImp&&!c.isPlayer&&!c.human&&c!==sp&&c.id!==id)c.sus[id]=(c.sus[id]||0)+amt;}
+// 死体が見つかった会議で、c が「殺された時刻に id を別の場所で見ていた」か
+function alibiFor(c,id){
+  const b=G.M&&G.M.body;
+  return !!b&&c.mem.some(m=>m.id===+id&&Math.abs(m.t-b.t)<=4&&m.room!==b.roomName);
+}
+// 発言を聞いたボットの疑いを動かす。trust なら、自分が疑っている人の言うことは割り引き、自分がアリバイを知っている人への告発は聞き流す
+function hear(sp,id,amt){
+  const D=G.D;
+  for(const c of G.actors)if(c.alive&&!c.isImp&&!c.isPlayer&&!c.human&&c!==sp&&c.id!==id){
+    if(D.trust&&amt>0&&alibiFor(c,id))continue;
+    const k=D.trust&&(c.sus[sp.id]||0)>=2?.35:1;
+    c.sus[id]=(c.sus[id]||0)+amt*k*D.listen;}
+}
 function replyTo(id){const t=byId(id);if(!t||t.isPlayer||t.human||!t.alive||Math.random()>.7)return;
   G.M.lines.splice(G.M.shown,0,{a:t,text:t.isImp?pick(['いやいや、濡れ衣だって！','証拠あるの？','ぼくはタスクしてただけだよ']):pick(['えっ、ぼくじゃないよ！','ずっとタスクしてたって！','信じてよ〜'])});}
 function crewLine(b){
   for(const id in b.sus){if(b.sus[id]>=100){const x=byId(id);if(x.alive)return{a:b,text:`${x.name}がキルするところを見た！！間違いない！`,fx:()=>{hear(b,x.id,4);replyTo(x.id);}};}}
-  const body=G.M.body;
+  const body=G.M.body,D=G.D;
   if(body){
-    const seen=new Set(),alibi=new Map();
+    const seen=new Set(),alibi=new Map(),withV=new Set();
     for(const m of b.mem){if(m.id===body.id||!byId(m.id).alive)continue;
-      if(m.t>=body.t-20&&m.t<=body.t+3&&m.room===body.roomName)seen.add(m.id);
+      if(m.t>=body.t-D.nearWin&&m.t<=body.t+3&&m.room===body.roomName)seen.add(m.id);
       if(Math.abs(m.t-body.t)<=4&&m.room!==body.roomName)alibi.set(m.id,m.room);}
-    for(const id of alibi.keys())seen.delete(id);
-    if(seen.size){const ids=[...seen];ids.forEach(id=>b.sus[id]=(b.sus[id]||0)+2.5);
+    // 被害者と最後に一緒にいた人：殺される前 nearWin 秒以内に、被害者と同じ部屋で同時に見かけた人
+    if(D.last){
+      const vs=b.mem.filter(m=>m.id===body.id&&m.t<=body.t&&m.t>=body.t-D.nearWin);
+      const lastT=vs.length?Math.max(...vs.map(m=>m.t)):null;
+      if(lastT!=null)for(const m of b.mem){if(m.id===body.id||m.id===b.id||!byId(m.id).alive)continue;
+        if(vs.some(v=>v.t>=lastT-8&&Math.abs(v.t-m.t)<=1&&v.room===m.room))withV.add(m.id);}
+    }
+    for(const id of alibi.keys()){seen.delete(id);withV.delete(id);}
+    // 候補が多いほど1人あたりの疑いは薄める（1人なら満額、2人なら3分の2、3人なら半分）
+    const share=n=>2/(n+1);
+    if(withV.size){const ids=[...withV],w=D.last*share(ids.length);ids.forEach(id=>b.sus[id]=(b.sus[id]||0)+w);
+      return{a:b,text:`${nameOf(body.id)}と最後に一緒にいたのは${ids.map(nameOf).join('と')}だよ`,fx:()=>{ids.forEach(id=>hear(b,id,w*.6));replyTo(ids[0]);}};}
+    if(seen.size){const ids=[...seen];ids.forEach(id=>b.sus[id]=(b.sus[id]||0)+D.near*(D.last?share(ids.length):1));
       return{a:b,text:`${body.roomName}の近くで${ids.map(nameOf).join('と')}を見かけたよ`,fx:()=>{ids.forEach(id=>hear(b,id,1.2));replyTo(ids[0]);}};}
     if(alibi.size){const [id,room]=pick([...alibi]);b.sus[id]=(b.sus[id]||0)-1.5;
       return{a:b,text:`${nameOf(id)}はそのとき${room}にいたよ。白だと思う`,fx:()=>hear(b,id,-1)};}
@@ -151,7 +174,13 @@ function botVote(b){
   const M=G.M;
   const counts=new Map();for(const v of M.votes.values())if(v!=='skip')counts.set(v,(counts.get(v)||0)+1);
   const alive=G.actors.filter(a=>a.alive&&a!==b);
-  if(!b.isImp){let best=null,bv=-1;for(const o of alive){const v=(b.sus[o.id]||0)+(counts.get(o.id)||0)*1+Math.random()*1.2;if(v>bv){bv=v;best=o;}}return bv>=3?best.id:'skip';}
+  if(!b.isImp){
+    const D=G.D;
+    // あと1人キルされたら負ける（残りのインポスター数は追放画面で全員に知らされている）ならスキップしない
+    const impLeft=G.actors.filter(a=>a.alive&&a.isImp).length,aliveN=alive.length+1;
+    const th=D.clutch&&aliveN-impLeft-1<=impLeft?.5:D.voteTh;
+    let best=null,bv=-1;for(const o of alive){const v=(b.sus[o.id]||0)+(counts.get(o.id)||0)*1+Math.random()*D.noise;if(v>bv){bv=v;best=o;}}
+    return bv>=th?best.id:'skip';}
   let best=null,bv=-1;
   for(const c of alive){if(c.isImp)continue;let tot=(counts.get(c.id)||0)*1.5+Math.random();for(const o of G.actors)if(o.alive&&!o.isImp&&!o.isPlayer&&!o.human&&o!==c)tot+=Math.max(0,o.sus[c.id]||0)/3;if(tot>bv){bv=tot;best=c;}}
   if(best&&bv>=2.2)return best.id;
@@ -229,7 +258,7 @@ function afterEject(e){
   if(e){e.alive=false;if(e.isPlayer){renderTaskList();toast('あなたは追放された… ゴーストとして続行',3500);}}
   G.state='play';
   if(checkWin())return;
-  for(const a of G.actors){if(a.isImp)a.killCd=a.isPlayer?15:rand(16,22);for(const k in a.sus)if(a.sus[k]<100)a.sus[k]*=.6;a.state='idle';a.path=[];}
+  for(const a of G.actors){if(a.isImp)a.killCd=a.isPlayer?15:rand(16,22);for(const k in a.sus)if(a.sus[k]<100)a.sus[k]*=G.D.keep;a.state='idle';a.path=[];}
   spawnAll();
   $('hud').classList.remove('hidden');
   G.M=null;

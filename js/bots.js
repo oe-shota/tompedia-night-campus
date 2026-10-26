@@ -1,7 +1,7 @@
 // ボットのAIとキル
 import {KILL_RANGE,KILL_CD,BOT_SPEED} from './config.js';
 import {rand,pick,dist} from './util.js';
-import {ST,WANDER,findPath,free,los,placeName} from './world.js';
+import {ST,WANDER,BTN,findPath,free,los,placeName} from './world.js';
 import {SFX} from './audio.js';
 import {canSee} from './render.js';
 import {toast,renderTaskList} from './ui.js';
@@ -27,6 +27,12 @@ function taskLogic(a,dt,fake){
   if(a.state==='task'||a.state==='wait'){a.wait-=dt;if(a.wait<=0){
     if(a.state==='task'&&!fake&&a.cur!=null&&!a.done.has(a.cur)){a.done.add(a.cur);G.tasksDone++;}a.state='idle';}return;}
   if(a.state==='move'||a.state==='flee'){if(followPath(a,dt,BOT_SPEED)){if(a.cur!=null){a.state='task';a.wait=rand(3.5,7);}else{a.state='wait';a.wait=rand(.5,3);}}return;}
+  // 生きているクルーのボットは、最近見かけた疑っていない人のところへ向かうことがある（ひとりになりにくくする）
+  if(!fake&&a.alive&&Math.random()<G.D.buddy){
+    const ids=new Set(a.mem.filter(m=>G.gameTime-m.t<8).map(m=>m.id));
+    const mates=G.actors.filter(o=>o!==a&&o.alive&&ids.has(o.id)&&(a.sus[o.id]||0)<1);
+    if(mates.length){const o=pick(mates);a.cur=null;go(a,o.f,Math.floor(o.x),Math.floor(o.y));a.state='move';return;}
+  }
   const rem=fake?[]:a.tasks.filter(s=>!a.done.has(s));
   if(rem.length&&Math.random()<.7)a.cur=pick(rem);
   else if(fake&&Math.random()<.6)a.cur=Math.floor(Math.random()*ST.length);
@@ -35,6 +41,15 @@ function taskLogic(a,dt,fake){
   else{const z=pick(WANDER);go(a,z.f,z.x+Math.floor(Math.random()*z.w),z.y+Math.floor(Math.random()*z.h));}
   a.state='move';
 }
+// キルを目撃したのに死体を報告できなかったら、緊急ボタンを押しに行く（1人1回）
+function alarm(a,dt){
+  if(a.alarmWait>0)a.alarmWait-=dt;
+  if(!G.D.alarm||a.emUsed||a.alarmWait>0||!G.actors.some(o=>o.alive&&(a.sus[o.id]||0)>=100)){if(a.state==='alarm')a.state='idle';return false;}
+  if(a.state!=='alarm'){a.state='alarm';a.cur=null;go(a,BTN.f,Math.floor(BTN.x),Math.floor(BTN.y));}
+  if(dist(a,BTN)<1.9){if(G.gameTime-G.roundStart>=10){a.emUsed=true;startMeeting(a,null);}return true;}
+  if(followPath(a,dt,BOT_SPEED)&&dist(a,BTN)>=1.9){a.state='idle';a.alarmWait=3;} // たどり着けなかったら少し待ってやり直す
+  return true;
+}
 function sees(o,t,r){return dist(o,t)<r&&los(o.f,o.x,o.y,t.x,t.y);}
 function hasWitness(a,t,ignorePlayer){
   for(const o of G.actors){if(!o.alive||o.isImp||o===t||o===a)continue;if(ignorePlayer&&(o.isPlayer||o.human))continue;
@@ -42,7 +57,7 @@ function hasWitness(a,t,ignorePlayer){
   return false;
 }
 function sense(a){
-  for(const o of G.actors){if(o===a||!o.alive)continue;if(sees(a,o,7))a.mem.push({id:o.id,room:placeName(o.f,o.x,o.y),t:G.gameTime});}
+  for(const o of G.actors){if(o===a||!o.alive)continue;if(sees(a,o,G.D.sense))a.mem.push({id:o.id,room:placeName(o.f,o.x,o.y),t:G.gameTime});}
   if(a.mem.length>400)a.mem=a.mem.filter(m=>G.gameTime-m.t<60);
 }
 export function updateBot(a,dt){
@@ -50,7 +65,8 @@ export function updateBot(a,dt){
   if(!a.alive){if(!a.isImp)taskLogic(a,dt,false);return;}
   if(!a.isImp){
     a.senseT-=dt;if(a.senseT<=0){a.senseT=.5;sense(a);}
-    for(const b of G.bodies)if(sees(a,b,5)){startMeeting(a,b);return;}
+    for(const b of G.bodies)if(sees(a,b,G.D.report)){startMeeting(a,b);return;}
+    if(alarm(a,dt))return;
     taskLogic(a,dt,false);return;
   }
   a.killCd-=dt;
@@ -78,7 +94,7 @@ export function updateBot(a,dt){
 export function kill(k,v){
   const body={id:v.id,f:v.f,x:v.x,y:v.y,color:v.color,t:G.gameTime,roomName:placeName(v.f,v.x,v.y)};
   k.killCd=KILL_CD;
-  for(const o of G.actors)if(o.alive&&!o.isPlayer&&!o.human&&!o.isImp&&o!==k&&o!==v&&sees(o,k,7.5))o.sus[k.id]=100;
+  for(const o of G.actors)if(o.alive&&!o.isPlayer&&!o.human&&!o.isImp&&o!==k&&o!==v&&sees(o,k,G.D.witness))o.sus[k.id]=100;
   killFx(k,v,body);
   if(isHost()){emitEv({k:'kill',kl:k.id,v:v.id,f:body.f,x:+body.x.toFixed(2),y:+body.y.toFixed(2),rn:body.roomName});sendState();}
   checkWin();

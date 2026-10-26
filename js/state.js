@@ -1,4 +1,6 @@
 // モジュールをまたいで書き換える状態はすべてここに置く
+import {DIFF} from './config.js';
+
 export const G={
   // 進行：'title' | 'lobby' | 'intro' | 'play' | 'meeting' | 'eject' | 'end'
   state:'title',
@@ -8,6 +10,7 @@ export const G={
   flash:0,fade:0,
   M:null,          // 会議の状態
   selColor:0,      // タイトルで選んだ色
+  D:DIFF.normal,   // クルーのボットの強さ（ゲーム開始時に決める）
   // オンライン
   MODE:'solo',     // 'solo' | 'host' | 'client'
   ROOM:null,RM:null,hostPeer:null,myPeer:null,gameId:0,

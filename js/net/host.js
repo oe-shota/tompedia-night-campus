@@ -1,5 +1,5 @@
 // ホスト側：ゲームの開始、全体状態の配信、参加者の操作の判定
-import {COLORS,KILL_RANGE,REPORT_RANGE,MAX_PLAYERS,DISCUSS_TIME,VOTE_TIME} from '../config.js';
+import {COLORS,KILL_RANGE,REPORT_RANGE,MAX_PLAYERS,DISCUSS_TIME,VOTE_TIME,DIFF} from '../config.js';
 import {$,rand,shuffle,dist,cleanName,validColor} from '../util.js';
 import {BTN} from '../world.js';
 import {SFX} from '../audio.js';
@@ -18,7 +18,7 @@ export function hostStartGame(){
   const hs=lobbyPeers().sort((a,b)=>(b.sameTab?1:0)-(a.sameTab?1:0)).slice(0,MAX_PLAYERS);
   if(!hs.some(p=>p.sameTab))return;
   const total=Math.max(n,hs.length),used=new Set();
-  G.actors=[];G.bodies=[];G.tasksDone=0;G.gameTime=0;G.lastEnd=null;G.gameId=1+Math.floor(Math.random()*1e9);
+  G.actors=[];G.bodies=[];G.tasksDone=0;G.gameTime=0;G.lastEnd=null;G.D=DIFF[$('lDiff').value]||DIFF.normal;G.gameId=1+Math.floor(Math.random()*1e9);
   hs.forEach((p,i)=>{
     let c=validColor(p.presence.col);if(used.has(c))c=COLORS.find(x=>!used.has(x.c)).c;used.add(c);
     const a=mkActor(i,cleanName(p.presence.nm),c,!!p.sameTab);a.human=true;a.peer=p.peer;a.remote=!p.sameTab;G.actors.push(a);

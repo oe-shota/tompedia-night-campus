@@ -1,5 +1,5 @@
 // ゲームの開始・ラウンド・勝敗
-import {COLORS,TASKS_PER} from './config.js';
+import {COLORS,TASKS_PER,DIFF} from './config.js';
 import {$,el,rand,shuffle} from './util.js';
 import {ST,BTN} from './world.js';
 import {beanCanvas} from './sprites.js';
@@ -39,7 +39,7 @@ export function dealTasks(firstKillCd){
 export function startGame(){
   const n=+$('sN').value,impN=Math.min(+$('sImp').value,maxImp(+$('sN').value)),role=$('sRole').value;
   const pc=COLORS[G.selColor];
-  G.actors=[];G.bodies=[];G.tasksDone=0;G.gameTime=0;
+  G.actors=[];G.bodies=[];G.tasksDone=0;G.gameTime=0;G.D=DIFF[$('sDiff').value]||DIFF.normal;
   const player=G.player=mkActor(0,($('iName').value.trim()||'あなた').slice(0,8),pc.c,true);G.actors.push(player);
   const pool=shuffle(COLORS.filter((_,i)=>i!==G.selColor));
   for(let i=0;i<n-1;i++)G.actors.push(mkActor(i+1,pool[i].n,pool[i].c,false));
