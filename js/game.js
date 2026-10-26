@@ -20,10 +20,15 @@ export function limitImp(sel,total){
 }
 export function initTitle(){
   const sw=$('swatches');
-  COLORS.forEach((c,i)=>{const d=el('div',{class:'sw'+(i===0?' sel':''),title:c.n});d.style.background=c.c;
-    d.onclick=()=>{G.selColor=i;[...sw.children].forEach((e,j)=>e.classList.toggle('sel',j===i));};sw.appendChild(d);});
-  $('sN').onchange=()=>limitImp($('sImp'),+$('sN').value);
-  limitImp($('sImp'),+$('sN').value);
+  COLORS.forEach((c,i)=>{const d=el('button',{class:'sw'+(i===0?' sel':''),title:c.n,type:'button'});d.style.background=c.c;
+    d.setAttribute('role','radio');d.setAttribute('aria-label',c.n);d.setAttribute('aria-checked',i===0);
+    d.onclick=()=>{G.selColor=i;[...sw.children].forEach((e,j)=>{e.classList.toggle('sel',j===i);e.setAttribute('aria-checked',j===i);});};sw.appendChild(d);});
+  // 設定を閉じていても今の値が見えるように、summary に要約を出す
+  const txt=id=>$(id).selectedOptions[0].textContent.replace(/（.*）/,'');
+  const sum=()=>{$('optSum').textContent=`${$('sN').value}人・インポスター${$('sImp').value}・${txt('sRole')}・ボット${txt('sDiff')}`;};
+  $('sN').onchange=()=>{limitImp($('sImp'),+$('sN').value);sum();};
+  ['sImp','sRole','sDiff'].forEach(id=>$(id).onchange=sum);
+  limitImp($('sImp'),+$('sN').value);sum();
 }
 
 export function mkActor(id,name,color,isPlayer){
@@ -78,7 +83,7 @@ export function beginPlay(){
   $('intro').classList.add('hidden');$('hud').classList.remove('hidden');
   G.state='play';renderTaskList();
   const imp=G.player.isImp;
-  $('roleTag').textContent=imp?'インポスター':'クルー（編集部員）';$('roleTag').style.color=imp?'#ff4d5e':'#a8d84e';
+  $('roleTag').textContent=imp?'インポスター':'クルー（編集部員）';$('roleTag').className=imp?'imp':'crew';
   $('bKill').classList.toggle('hidden',!imp);
 }
 

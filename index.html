@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self'; worker-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>とんペディア 夜の講義棟</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,11 +18,16 @@
 <button id="soundBtn" title="効果音オン">🔊</button>
 
 <div id="hud" class="hidden">
-  <div id="taskbarWrap"><div class="label">記事の完成度（全体タスク）</div><div id="taskbar"><div id="taskfill"></div></div></div>
-  <div id="tasklist"></div>
-  <div id="roleTag"></div>
-  <div id="floorTag"></div>
-  <div id="netTag" class="hidden"></div>
+  <div id="hudL" class="glass">
+    <div id="taskbarWrap"><div class="label">記事の完成度<span class="muted">（全体タスク）</span></div><div id="taskbar"><div id="taskfill"></div></div></div>
+    <button id="bTasks" class="hudFold" aria-expanded="true">自分のタスク<span id="taskCount"></span></button>
+    <div id="tasklist"></div>
+  </div>
+  <div id="hudR">
+    <div id="roleTag"></div>
+    <div id="floorTag"></div>
+    <div id="netTag" class="hidden"></div>
+  </div>
   <div id="btns">
     <button id="bMap">マップ<small>M</small></button>
     <button id="bReport">報告<small>R</small></button>
@@ -34,36 +39,49 @@
 </div>
 
 <div id="title" class="screen">
-  <div class="card">
-    <div class="moon"></div>
-    <span class="place">東北大学 講義棟 A・B・C棟 ／ 夜</span>
-    <h1><span class="tp">とんペディア</span><br><span class="au">夜の講義棟</span></h1>
-    <p class="sub">夜の講義棟に紛れ込んだ「インポスター」を見つけ出せ！</p>
-    <label class="f">なまえ</label>
-    <input id="iName" type="text" maxlength="8" value="あなた">
-    <label class="f">いろ</label>
-    <div class="swatches" id="swatches"></div>
-    <div class="row">
-      <div><label class="f">人数</label><select id="sN"><option>6</option><option>7</option><option selected>8</option><option>9</option><option>10</option></select></div>
-      <div><label class="f">インポスター</label><select id="sImp"><option selected>1</option><option value="2">2（7人以上）</option></select></div>
-    </div>
-    <div class="row">
-      <div><label class="f">あなたの役職（1人用）</label><select id="sRole"><option value="rand">ランダム</option><option value="crew">クルー</option><option value="imp">インポスター</option></select></div>
-      <div><label class="f">ボットの強さ</label><select id="sDiff"><option value="weak">よわい</option><option value="normal" selected>ふつう</option><option value="strong">つよい</option></select></div>
-    </div>
-    <button class="btn wide" id="bStart">1人で遊ぶ（ボット対戦）</button>
-    <div class="mp">
-      <div class="mpHead">みんなで遊ぶ（オンライン）</div>
-      <div class="mpRow"><button class="btn ghost" id="bCreate">部屋を作る</button><div class="joinRow"><input id="iCode" type="text" inputmode="numeric" maxlength="4" placeholder="部屋コード4桁" autocomplete="off"><button class="btn ghost" id="bJoin">参加</button></div></div>
+  <div class="card titleCard">
+    <header class="hero">
+      <div class="moon"></div>
+      <span class="place">東北大学 講義棟 A・B・C棟 ／ 夜</span>
+      <h1><span class="tp">とんペディア</span><br><span class="au">夜の講義棟</span></h1>
+      <p class="sub">夜の講義棟に紛れ込んだ「インポスター」を見つけ出せ！</p>
+    </header>
+    <section class="sec">
+      <label class="f" for="iName">なまえ</label>
+      <input id="iName" type="text" maxlength="8" value="あなた">
+      <label class="f">いろ</label>
+      <div class="swatches" id="swatches" role="radiogroup" aria-label="いろ"></div>
+    </section>
+    <section class="sec">
+      <h2 class="secHead">1人で遊ぶ</h2>
+      <details class="opts">
+        <summary><span class="nw">ゲームの設定</span><span class="optSum" id="optSum"></span></summary>
+        <div class="row">
+          <div><label class="f" for="sN">人数</label><select id="sN"><option>6</option><option>7</option><option selected>8</option><option>9</option><option>10</option></select></div>
+          <div><label class="f" for="sImp">インポスター</label><select id="sImp"><option selected>1</option><option value="2">2（7人以上）</option></select></div>
+        </div>
+        <div class="row">
+          <div><label class="f" for="sRole">あなたの役職</label><select id="sRole"><option value="rand">ランダム</option><option value="crew">クルー</option><option value="imp">インポスター</option></select></div>
+          <div><label class="f" for="sDiff">ボットの強さ</label><select id="sDiff"><option value="weak">よわい</option><option value="normal" selected>ふつう</option><option value="strong">つよい</option></select></div>
+        </div>
+      </details>
+      <button class="btn wide" id="bStart">ボットと遊ぶ</button>
+    </section>
+    <section class="sec">
+      <h2 class="secHead">みんなで遊ぶ<span class="muted">（オンライン）</span></h2>
+      <div class="mpRow"><button class="btn ghost" id="bCreate">部屋を作る</button><div class="joinRow"><input id="iCode" type="text" inputmode="numeric" maxlength="4" placeholder="部屋コード4桁" autocomplete="off" aria-label="部屋コード"><button class="btn ghost" id="bJoin">参加</button></div></div>
       <p class="mpNote" id="mpNote">接続を確認中…</p>
-    </div>
-    <div class="howto">
-      <b>クルー（編集部員）</b>：各部屋で記事づくりのタスクをこなそう。全員のタスクが終わるか、インポスターを会議で全員追放すれば勝ち。<br>
-      <b>インポスター</b>：気づかれないようにクルーをキルしよう。クルーと同数になれば勝ち。<br>
-      <b>操作</b>：WASD / 矢印キーで移動（スマホは画面をドラッグ）、E・Spaceで使う、Rで報告、Qでキル、Mでマップ。<br>
-      <b>階段</b>：▲▼のマスで「使う」と上下の階へ。A・C棟は4F、B棟は2Fまで。2Fの西側には大講義室（200番教室）。<br>
-      死体を見つけたら報告、B棟1Fラウンジの赤いボタンで緊急会議（1回まで）。
-    </div>
+    </section>
+    <details class="howto">
+      <summary>遊び方</summary>
+      <dl>
+        <dt>クルー（編集部員）</dt><dd>各部屋で記事づくりのタスクをこなそう。全員のタスクが終わるか、インポスターを会議で全員追放すれば勝ち。</dd>
+        <dt>インポスター</dt><dd>気づかれないようにクルーをキルしよう。クルーと同数になれば勝ち。</dd>
+        <dt>操作</dt><dd>WASD / 矢印キーで移動（スマホは画面をドラッグ）、E・Spaceで使う、Rで報告、Qでキル、Mでマップ。</dd>
+        <dt>階段</dt><dd>▲▼のマスで「使う」と上下の階へ。A・C棟は4F、B棟は2Fまで。2Fの西側には大講義室（200番教室）。</dd>
+        <dt>会議</dt><dd>死体を見つけたら報告、B棟1Fラウンジの赤いボタンで緊急会議（1回まで）。</dd>
+      </dl>
+    </details>
     <p class="credit">とん平のイラスト © とんペディア ／ 非公式のファン作品です。東北大学・Innersloth（Among Us）とは関係ありません。</p>
   </div>
 </div>
@@ -72,17 +90,17 @@
 
 <div id="lobby" class="screen hidden"><div class="card">
   <span class="place">オンライン部屋</span>
-  <div class="code">部屋コード<b id="lobbyCode"></b></div>
+  <div class="code"><span class="codeLabel">部屋コード</span><b id="lobbyCode"></b><span class="codeHint">仲間にこのコードを伝えよう</span></div>
   <p class="sub" id="lobbyMsg"></p>
-  <p class="mpNote" id="lobbyDiag"></p>
   <div class="beans lobbyList" id="lobbyList"></div>
   <div class="row" id="lobbyHostOpts">
-    <div><label class="f">人数（足りない分はボット）</label><select id="lN"><option>4</option><option>5</option><option>6</option><option>7</option><option selected>8</option><option>9</option><option>10</option></select></div>
-    <div><label class="f">インポスター</label><select id="lImp"><option selected>1</option><option value="2">2（7人以上）</option></select></div>
-    <div><label class="f">ボットの強さ</label><select id="lDiff"><option value="weak">よわい</option><option value="normal" selected>ふつう</option><option value="strong">つよい</option></select></div>
+    <div><label class="f" for="lN">人数<span class="muted">（足りない分はボット）</span></label><select id="lN"><option>4</option><option>5</option><option>6</option><option>7</option><option selected>8</option><option>9</option><option>10</option></select></div>
+    <div><label class="f" for="lImp">インポスター</label><select id="lImp"><option selected>1</option><option value="2">2（7人以上）</option></select></div>
+    <div><label class="f" for="lDiff">ボットの強さ</label><select id="lDiff"><option value="weak">よわい</option><option value="normal" selected>ふつう</option><option value="strong">つよい</option></select></div>
   </div>
   <button class="btn wide" id="bLobbyStart">ゲーム開始</button>
   <button class="btn ghost wide" id="bLobbyLeave">部屋を出る</button>
+  <details class="diag"><summary>接続の詳細</summary><p class="mpNote" id="lobbyDiag"></p></details>
 </div></div>
 
 <div id="taskPanel" class="modal hidden"><div class="panel"><button class="close" id="bTaskClose">×</button><h3 id="taskTitle"></h3><div id="taskBody"></div></div></div>
