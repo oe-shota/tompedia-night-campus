@@ -10,7 +10,7 @@ import {mkActor,spawnAll,showIntro,beginPlay,endGame} from '../game.js';
 import {killFx} from '../bots.js';
 import {meetingUI,updateCards,addChat,addSys,renderVoteDots,showEject,stopEject} from '../meeting.js';
 import {G,byId,isClient} from '../state.js';
-import {renderLobby,showLobby} from './room.js';
+import {renderLobby,closeRoom,leaveRoom} from './room.js';
 
 const listOk=a=>Array.isArray(a)&&a.length<=MAX_PLAYERS;
 
@@ -111,15 +111,24 @@ function clientResume(d){
   G.state='play';player.killCd=15;G.bodies=[];G.M=null;
   spawnAll();renderTaskList();$('hud').classList.remove('hidden');
 }
+// ホストがいなくなったら部屋を閉じる（参加者は部屋から抜け、タイトルに戻れるようにする）
 export function hostGone(){
-  if(G.state==='lobby'){renderLobby();return;}
-  if(G.state==='end')return;
-  closeTask();if(G.mapOpen)toggleMap();
+  const msg='ホストが退出したため、部屋を閉じました。';
+  const toTitle=()=>{$('end').classList.add('hidden');$('title').classList.remove('hidden');G.state='title';};
+  if(G.state==='lobby'){leaveRoom();$('mpNote').textContent=msg;return;}
+  closeRoom();
+  if(G.state==='end'){
+    // 結果画面は残し、ボタンの行き先だけタイトルにする
+    toast(msg,4000);
+    const bt=$('endBody').querySelector('button');if(bt){bt.textContent='タイトルに戻る';bt.onclick=toTitle;}
+    return;
+  }
+  closeTask();if(G.mapOpen)toggleMap();stopEject();
   hideScreens(['hud','meeting','eject','intro']);
   G.state='end';
   $('endBody').replaceChildren(
     el('div',{class:'role imp',text:'ゲーム終了'}),
-    el('p',{text:'ホストが退出したため、ゲームを終了しました。'}),
-    el('button',{class:'btn',text:'ロビーに戻る',onclick:showLobby}));
+    el('p',{text:msg}),
+    el('button',{class:'btn',text:'タイトルに戻る',onclick:toTitle}));
   $('end').classList.remove('hidden');
 }

@@ -58,12 +58,18 @@ export async function enterRoom(code,asHost){
   $('lobbyCode').textContent=code;
   showLobby();
 }
-function leaveRoom(){
+// 部屋から抜けて通信の状態を片付ける（画面はそのまま）
+export function closeRoom(){
   if(G.RM)G.RM.leave().catch(()=>{});
-  G.RM=null;G.MODE='solo';G.hostPeer=null;G.state='title';G.actors=[];G.player=null;
+  G.RM=null;G.MODE='solo';G.hostPeer=null;
   posMap.clear();lobbyReg.clear();
+  $('bCreate').disabled=$('bJoin').disabled=!G.ROOM;
+}
+export function leaveRoom(){
+  closeRoom();
+  G.state='title';G.actors=[];G.player=null;
   hideScreens(['lobby','end','hud','intro','meeting','eject']);
-  $('title').classList.remove('hidden');$('bCreate').disabled=$('bJoin').disabled=!G.ROOM;
+  $('title').classList.remove('hidden');
 }
 export function lobbyPeers(){
   if(!G.RM)return [];

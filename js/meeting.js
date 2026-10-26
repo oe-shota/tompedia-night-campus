@@ -224,6 +224,7 @@ export function showEject(e,tie){
 // 追放画面を途中で閉じる（参加者がホストの再開を受けたとき）
 export function stopEject(){clearInterval(ejectIv);$('eject').classList.add('hidden');}
 function afterEject(e){
+  if(G.state!=='eject')return; // 追放画面の途中で部屋が閉じた場合など
   $('eject').classList.add('hidden');
   if(e){e.alive=false;if(e.isPlayer){renderTaskList();toast('あなたは追放された… ゴーストとして続行',3500);}}
   G.state='play';
