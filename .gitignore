@@ -4,3 +4,5 @@ Thumbs.db
 node_modules/
 .wrangler/
 dist/
+# とん平の元イラスト（手元だけに置く。リポジトリには含めない）
+assets/tonpei/original/

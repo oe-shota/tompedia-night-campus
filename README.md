@@ -135,7 +135,7 @@ js/net/sync.js           オンライン対戦：位置の同期・定期処理
 js/net/wsroom.js         オンライン対戦（Web 版）：中継サーバーとつなぐ room
 js/ticker.worker.js      タブが裏に回っても進行を続けるための Worker
 assets/tonpei/           ゲームで使っているとん平の画像（白フチを外して縮小したもの）
-assets/tonpei/original/  元のイラスト
+assets/tonpei/original/  元のイラスト（手元だけに置き、リポジトリには含めない）
 docs/floorplan-sketch.jpg 講義棟の配置の手書きメモ（上が西）
 test/mockroom.js         オンライン対戦のテスト用の模擬 room
 worker/index.js          Web 版の中継サーバー（Cloudflare Workers + Durable Objects）
