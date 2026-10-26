@@ -1,6 +1,7 @@
 {
-  "name": "tompedia-among-us",
+  "name": "tompedia-night-campus",
   "private": true,
+  "license": "UNLICENSED",
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",

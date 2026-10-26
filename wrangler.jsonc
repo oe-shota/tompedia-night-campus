@@ -1,7 +1,7 @@
 // Web 版の配信（Cloudflare Workers）：ゲームの静的ファイル＋オンライン対戦の中継サーバー
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "tompedia-among-us",
+  "name": "tompedia-night-campus",
   "main": "worker/index.js",
   "compatibility_date": "2026-10-01",
   "build": {

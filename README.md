@@ -1,4 +1,4 @@
-# とんペディア版 Among Us
+# とんペディア 夜の講義棟
 
 夜の東北大学 講義棟（A・B・C棟）を舞台に、とん平たちが「インポスター」を探す推理ゲームです。
 ビルド不要の静的ファイル（`index.html` ＋ `css/` ＋ `js/`（ES モジュール）＋ `assets/`）で動きます。
@@ -48,7 +48,7 @@ presence（各端末の名前・位置）は 0.5 秒に1回まで間引いて送
 ```bash
 npm install
 npx wrangler login   # ブラウザで Cloudflare にログイン
-npm run deploy       # https://tompedia-among-us.<アカウント>.workers.dev に公開
+npm run deploy       # https://tompedia-night-campus.<アカウント>.workers.dev に公開
 ```
 
 - 無料プランで動きます。目安として、10人の部屋で1時間遊ぶと Durable Objects のリクエストを約1.6万回使います（無料枠は1日10万回）。
@@ -141,6 +141,7 @@ test/mockroom.js         オンライン対戦のテスト用の模擬 room
 worker/index.js          Web 版の中継サーバー（Cloudflare Workers + Durable Objects）
 scripts/build.mjs        Web 版で配信するファイルを dist/ にコピー
 wrangler.jsonc           Web 版の Cloudflare の設定
+LICENSE                  権利表示（All rights reserved。イラスト・フォントの扱い）
 ```
 
 ## セキュリティ
@@ -149,4 +150,10 @@ wrangler.jsonc           Web 版の Cloudflare の設定
 - 画面の文字はすべて `textContent` で入れています（`innerHTML` は使わない）。
 - ほかの端末から届いたデータは、型・範囲・件数を確かめてから使います（名前と発言は制御文字・不可視文字を除去）。
 
-とん平のイラストはとんペディアのキャラクターです。リポジトリは非公開で管理しています。
+## 権利・クレジット
+
+- ソースコードなどは All rights reserved（© 2026 oe-shota）。詳しくは [LICENSE](LICENSE)。リポジトリは非公開で管理しています。
+- とん平のイラスト（`assets/tonpei/`）はとんペディアの著作物で、許可を得て使っています。
+- フォント：[Zen Kaku Gothic New](https://fonts.google.com/specimen/Zen+Kaku+Gothic+New)（SIL Open Font License 1.1、Google Fonts から読み込み）。効果音は Web Audio で合成しています（音源ファイルなし）。
+- 非公式のファン作品です。東北大学、Innersloth LLC（Among Us）とは関係がなく、承認も受けていません。「Among Us」は Innersloth LLC の商標です。講義棟の配置は手書きのメモをもとにしたもので、正確ではありません。
+- 名前と発言は中継サーバーで同じ部屋の端末に配るだけで、保存しません。フォントを Google Fonts から読み込むため、閲覧者の IP アドレスなどが Google に送られます。
